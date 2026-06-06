@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Helpdesk TI — Diagramas de BD</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2d3148;
+    --accent: #4f8ef7;
+    --accent2: #7c5cbf;
+    --accent3: #2ec4b6;
+    --warn: #e07b39;
+    --text: #e2e8f0;
+    --muted: #6b7280;
+    --pk: #f6c90e;
+    --fk: #4f8ef7;
+    --attr: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 32px; }
+
+  h1 { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  h2 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 28px; letter-spacing: .05em; text-transform: uppercase; }
+  h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+       color: white; background: var(--accent); padding: 6px 12px; border-radius: 4px 4px 0 0; }
+  h3.green  { background: #1a7a4a; }
+  h3.purple { background: var(--accent2); }
+  h3.teal   { background: #1a6b7a; }
+  h3.orange { background: #7a3d1a; }
+  h3.pink   { background: #7a1a4a; }
+  h3.assoc  { background: #3d4a1a; }
+
+  .section { margin-bottom: 48px; }
+  .section-title {
+    font-size: 18px; font-weight: 700; color: var(--text);
+    border-left: 4px solid var(--accent); padding-left: 12px;
+    margin-bottom: 20px;
+  }
+
+  /* ── TABELA DE ENTIDADE ── */
+  .entity-grid { display: flex; flex-wrap: wrap; gap: 20px; }
+  .entity {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; min-width: 220px; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  }
+  .attr-list { padding: 8px 0; }
+  .attr-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .attr-row:last-child { border-bottom: none; }
+  .badge {
+    font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px;
+    min-width: 26px; text-align: center; flex-shrink: 0;
+  }
+  .pk  { background: var(--pk);  color: #000; }
+  .fk  { background: var(--fk);  color: #fff; }
+  .nn  { background: #374151;    color: #9ca3af; }
+  .uq  { background: var(--accent3); color: #000; }
+  .attr-name  { color: var(--text); }
+  .attr-type  { color: var(--muted); margin-left: auto; font-size: 11px; }
+  .ck { color: var(--warn); font-size: 10px; margin-left: 4px; }
+
+  /* ── RELAÇÕES (DER) ── */
+  .rel-section { background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px 20px; }
+  .rel-row { display: flex; align-items: center; gap: 10px; padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04); font-size: 13px; }
+  .rel-row:last-child { border-bottom: none; }
+  .rel-entity { font-weight: 600; color: var(--accent); }
+  .rel-card   { background: var(--border); padding: 2px 8px; border-radius: 4px;
+    font-family: monospace; font-size: 12px; color: var(--accent3); }
+  .rel-label  { color: var(--muted); font-style: italic; font-size: 12px; }
+
+  /* ── REGRAS DE NEGÓCIO ── */
+  .rn-list { list-style: none; }
+  .rn-list li {
+    background: var(--surface); border-left: 3px solid var(--warn);
+    padding: 10px 14px; margin-bottom: 10px; border-radius: 0 6px 6px 0;
+    font-size: 13px;
+  }
+  .rn-list li strong { color: var(--warn); }
+
+  /* ── DIAGRAMA DE CLASSES ── */
+  .class-grid { display: flex; flex-wrap: wrap; gap: 20px; }
+  .cls {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; min-width: 240px; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  }
+  .cls-head { padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    background: rgba(255,255,255,.04); border-bottom: 1px solid var(--border); }
+  .cls-head .pkg   { color: var(--muted); font-size: 10px; }
+  .cls-head .cname { color: white; font-weight: 700; font-size: 14px; }
+  .cls-section { border-bottom: 1px solid var(--border); padding: 6px 0; }
+  .cls-section:last-child { border-bottom: none; }
+  .cls-row { padding: 3px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .priv { color: #e05252; margin-right: 4px; }
+  .pub  { color: #52e07a; margin-right: 4px; }
+  .meth-name { color: var(--accent3); }
+  .ret-type  { color: var(--muted); }
+  .field-name { color: var(--text); }
+  .field-type { color: var(--muted); }
+
+  /* ── MODELO LÓGICO ── */
+  .logic-table { border-collapse: collapse; width: 100%; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+  .logic-table th { background: #1f2235; padding: 6px 10px; text-align: left;
+    border: 1px solid var(--border); color: var(--muted); font-size: 11px; }
+  .logic-table td { padding: 5px 10px; border: 1px solid var(--border); }
+  .logic-wrap { background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+  .logic-title { padding: 8px 12px; font-weight: 700; font-size: 13px;
+    background: #1f2235; border-bottom: 1px solid var(--border); }
+
+  .tag-pk  { color: var(--pk); font-weight: 700; }
+  .tag-fk  { color: var(--fk); }
+  .tag-uq  { color: var(--accent3); }
+  .tag-nn  { color: var(--muted); }
+
+  .page-break { margin: 48px 0 0; border-top: 1px dashed var(--border); padding-top: 36px; }
+</style>
+</head>
+<body>
+
+<h1>🖥  Helpdesk de TI</h1>
+<h2>Laboratório de Banco de Dados — UCB 2025 | Diagramas do Projeto</h2>
+
+<!-- ══════════════════════════════════════════════════
+     SEÇÃO 1 — DER (Diagrama Entidade-Relacionamento)
+════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">1. Diagrama Entidade-Relacionamento (DER)</div>
+
+  <div class="entity-grid">
+
+    <!-- USUARIO -->
+    <div class="entity">
+      <h3 class="green">USUARIO</h3>
+      <div class="attr-list">
+        <div class="attr-row"><span class="badge pk">PK</span><span class="attr-name">id_usuario</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">nome</span><span class="attr-type">VARCHAR(100)</span></div>
+        <div class="attr-row"><span class="badge uq">UQ</span><span class="attr-name">email</span><span class="attr-type">VARCHAR(150)</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">departamento</span><span class="attr-type">VARCHAR(80)</span></div>
+        <div class="attr-row"><span class="badge nn">  </span><span class="attr-name">telefone</span><span class="attr-type">VARCHAR(20)</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">ativo</span><span class="attr-type">INTEGER</span><span class="ck">CHECK(0,1)</span></div>
+      </div>
+    </div>
+
+    <!-- CATEGORIA -->
+    <div class="entity">
+      <h3 class="purple">CATEGORIA</h3>
+      <div class="attr-list">
+        <div class="attr-row"><span class="badge pk">PK</span><span class="attr-name">id_categoria</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge uq">UQ</span><span class="attr-name">nome</span><span class="attr-type">VARCHAR(80)</span></div>
+        <div class="attr-row"><span class="badge nn">  </span><span class="attr-name">descricao</span><span class="attr-type">TEXT</span></div>
+      </div>
+    </div>
+
+    <!-- EQUIPAMENTO -->
+    <div class="entity">
+      <h3 class="teal">EQUIPAMENTO</h3>
+      <div class="attr-list">
+        <div class="attr-row"><span class="badge pk">PK</span><span class="attr-name">id_equipamento</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge uq">UQ</span><span class="attr-name">patrimonio</span><span class="attr-type">VARCHAR(30)</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">descricao</span><span class="attr-type">VARCHAR(150)</span></div>
+        <div class="attr-row"><span class="badge nn">  </span><span class="attr-name">localizacao</span><span class="attr-type">VARCHAR(100)</span></div>
+        <div class="attr-row"><span class="badge fk">FK</span><span class="attr-name">id_usuario</span><span class="attr-type">INTEGER</span></div>
+      </div>
+    </div>
+
+    <!-- TECNICO -->
+    <div class="entity">
+      <h3 class="orange">TECNICO</h3>
+      <div class="attr-list">
+        <div class="attr-row"><span class="badge pk">PK</span><span class="attr-name">id_tecnico</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">nome</span><span class="attr-type">VARCHAR(100)</span></div>
+        <div class="attr-row"><span class="badge uq">UQ</span><span class="attr-name">email</span><span class="attr-type">VARCHAR(150)</span></div>
+        <div class="attr-row"><span class="badge uq">UQ</span><span class="attr-name">login</span><span class="attr-type">VARCHAR(50)</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">ativo</span><span class="attr-type">INTEGER</span><span class="ck">CHECK(0,1)</span></div>
+      </div>
+    </div>
+
+    <!-- CHAMADO -->
+    <div class="entity" style="min-width:260px">
+      <h3>CHAMADO</h3>
+      <div class="attr-list">
+        <div class="attr-row"><span class="badge pk">PK</span><span class="attr-name">id_chamado</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">titulo</span><span class="attr-type">VARCHAR(200)</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">descricao</span><span class="attr-type">TEXT</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">prioridade</span><span class="attr-type">VARCHAR(10)</span><span class="ck">CHECK</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">status</span><span class="attr-type">VARCHAR(20)</span><span class="ck">CHECK</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">dt_abertura</span><span class="attr-type">TEXT</span></div>
+        <div class="attr-row"><span class="badge nn">  </span><span class="attr-name">dt_fechamento</span><span class="attr-type">TEXT</span></div>
+        <div class="attr-row"><span class="badge fk">FK</span><span class="attr-name">id_usuario</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge fk">FK</span><span class="attr-name">id_categoria</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge fk">FK</span><span class="attr-name">id_equipamento</span><span class="attr-type">INTEGER?</span></div>
+      </div>
+    </div>
+
+    <!-- CHAMADO_TECNICO (N:N) -->
+    <div class="entity">
+      <h3 class="assoc">CHAMADO_TECNICO ⟨N:N⟩</h3>
+      <div class="attr-list">
+        <div class="attr-row"><span class="badge pk">PK</span><span class="badge fk">FK</span><span class="attr-name">id_chamado</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge pk">PK</span><span class="badge fk">FK</span><span class="attr-name">id_tecnico</span><span class="attr-type">INTEGER</span></div>
+        <div class="attr-row"><span class="badge nn">NN</span><span class="attr-name">dt_atribuicao</span><span class="attr-type">TEXT</span></div>
+        <div class="attr-row"><span class="badge nn">  </span><span class="attr-name">observacao</span><span class="attr-type">TEXT</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Relacionamentos -->
+  <div style="margin-top:24px">
+    <div class="section-title" style="font-size:15px;">Relacionamentos</div>
+    <div class="rel-section">
+      <div class="rel-row"><span class="rel-entity">USUARIO</span><span class="rel-card">1</span>→<span class="rel-card">N</span><span class="rel-entity">CHAMADO</span><span class="rel-label">abre chamados</span></div>
+      <div class="rel-row"><span class="rel-entity">USUARIO</span><span class="rel-card">1</span>→<span class="rel-card">N</span><span class="rel-entity">EQUIPAMENTO</span><span class="rel-label">responsável pelo equipamento</span></div>
+      <div class="rel-row"><span class="rel-entity">CATEGORIA</span><span class="rel-card">1</span>→<span class="rel-card">N</span><span class="rel-entity">CHAMADO</span><span class="rel-label">classifica o chamado</span></div>
+      <div class="rel-row"><span class="rel-entity">EQUIPAMENTO</span><span class="rel-card">1</span>→<span class="rel-card">N</span><span class="rel-entity">CHAMADO</span><span class="rel-label">equipamento envolvido (opcional)</span></div>
+      <div class="rel-row"><span class="rel-entity">CHAMADO</span><span class="rel-card">N</span>↔<span class="rel-card">N</span><span class="rel-entity">TECNICO</span><span class="rel-label">via tabela CHAMADO_TECNICO</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SEÇÃO 2 — MODELO LÓGICO RELACIONAL
+════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-title">2. Modelo Lógico Relacional</div>
+
+  <div class="logic-wrap">
+    <div class="logic-title">usuario (<span class="tag-pk">id_usuario</span>, nome, email, departamento, telefone, ativo)</div>
+    <table class="logic-table">
+      <tr><th>Atributo</th><th>Tipo</th><th>Restrições</th></tr>
+      <tr><td class="tag-pk">id_usuario</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td></tr>
+      <tr><td>nome</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+      <tr><td class="tag-uq">email</td><td>VARCHAR(150)</td><td>NOT NULL, UNIQUE</td></tr>
+      <tr><td>departamento</td><td>VARCHAR(80)</td><td>NOT NULL</td></tr>
+      <tr><td>telefone</td><td>VARCHAR(20)</td><td>—</td></tr>
+      <tr><td>ativo</td><td>INTEGER</td><td>NOT NULL, DEFAULT 1, CHECK IN (0,1)</td></tr>
+    </table>
+  </div>
+
+  <div class="logic-wrap">
+    <div class="logic-title">categoria (<span class="tag-pk">id_categoria</span>, nome, descricao)</div>
+    <table class="logic-table">
+      <tr><th>Atributo</th><th>Tipo</th><th>Restrições</th></tr>
+      <tr><td class="tag-pk">id_categoria</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td></tr>
+      <tr><td class="tag-uq">nome</td><td>VARCHAR(80)</td><td>NOT NULL, UNIQUE</td></tr>
+      <tr><td>descricao</td><td>TEXT</td><td>—</td></tr>
+    </table>
+  </div>
+
+  <div class="logic-wrap">
+    <div class="logic-title">equipamento (<span class="tag-pk">id_equipamento</span>, patrimonio, descricao, localizacao, <span class="tag-fk">id_usuario</span>)</div>
+    <table class="logic-table">
+      <tr><th>Atributo</th><th>Tipo</th><th>Restrições</th></tr>
+      <tr><td class="tag-pk">id_equipamento</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td></tr>
+      <tr><td class="tag-uq">patrimonio</td><td>VARCHAR(30)</td><td>NOT NULL, UNIQUE</td></tr>
+      <tr><td>descricao</td><td>VARCHAR(150)</td><td>NOT NULL</td></tr>
+      <tr><td>localizacao</td><td>VARCHAR(100)</td><td>—</td></tr>
+      <tr><td class="tag-fk">id_usuario</td><td>INTEGER</td><td>FK → usuario(id_usuario), ON DELETE SET NULL</td></tr>
+    </table>
+  </div>
+
+  <div class="logic-wrap">
+    <div class="logic-title">tecnico (<span class="tag-pk">id_tecnico</span>, nome, email, login, ativo)</div>
+    <table class="logic-table">
+      <tr><th>Atributo</th><th>Tipo</th><th>Restrições</th></tr>
+      <tr><td class="tag-pk">id_tecnico</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td></tr>
+      <tr><td>nome</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+      <tr><td class="tag-uq">email</td><td>VARCHAR(150)</td><td>NOT NULL, UNIQUE</td></tr>
+      <tr><td class="tag-uq">login</td><td>VARCHAR(50)</td><td>NOT NULL, UNIQUE</td></tr>
+      <tr><td>ativo</td><td>INTEGER</td><td>NOT NULL, DEFAULT 1, CHECK IN (0,1)</td></tr>
+    </table>
+  </div>
+
+  <div class="logic-wrap">
+    <div class="logic-title">chamado (<span class="tag-pk">id_chamado</span>, titulo, descricao, prioridade, status, dt_abertura, dt_fechamento, <span class="tag-fk">id_usuario</span>, <span class="tag-fk">id_categoria</span>, <span class="tag-fk">id_equipamento</span>)</div>
+    <table class="logic-table">
+      <tr><th>Atributo</th><th>Tipo</th><th>Restrições</th></tr>
+      <tr><td class="tag-pk">id_chamado</td><td>INTEGER</td><td>PK, AUTOINCREMENT</td></tr>
+      <tr><td>titulo</td><td>VARCHAR(200)</td><td>NOT NULL</td></tr>
+      <tr><td>descricao</td><td>TEXT</td><td>NOT NULL</td></tr>
+      <tr><td>prioridade</td><td>VARCHAR(10)</td><td>NOT NULL, DEFAULT 'MEDIA', CHECK IN ('BAIXA','MEDIA','ALTA','CRITICA')</td></tr>
+      <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL, DEFAULT 'ABERTO', CHECK IN ('ABERTO','EM_ATENDIMENTO','RESOLVIDO','FECHADO')</td></tr>
+      <tr><td>dt_abertura</td><td>TEXT</td><td>NOT NULL, DEFAULT datetime('now')</td></tr>
+      <tr><td>dt_fechamento</td><td>TEXT</td><td>—</td></tr>
+      <tr><td class="tag-fk">id_usuario</td><td>INTEGER</td><td>NOT NULL, FK → usuario(id_usuario)</td></tr>
+      <tr><td class="tag-fk">id_categoria</td><td>INTEGER</td><td>NOT NULL, FK → categoria(id_categoria)</td></tr>
+      <tr><td class="tag-fk">id_equipamento</td><td>INTEGER</td><td>FK → equipamento(id_equipamento) (opcional)</td></tr>
+    </table>
+  </div>
+
+  <div class="logic-wrap">
+    <div class="logic-title">chamado_tecnico (<span class="tag-pk">id_chamado</span>, <span class="tag-pk">id_tecnico</span>, dt_atribuicao, observacao) — tabela associativa N:N</div>
+    <table class="logic-table">
+      <tr><th>Atributo</th><th>Tipo</th><th>Restrições</th></tr>
+      <tr><td class="tag-pk tag-fk">id_chamado</td><td>INTEGER</td><td>PK, FK → chamado(id_chamado), ON DELETE CASCADE</td></tr>
+      <tr><td class="tag-pk tag-fk">id_tecnico</td><td>INTEGER</td><td>PK, FK → tecnico(id_tecnico), ON DELETE CASCADE</td></tr>
+      <tr><td>dt_atribuicao</td><td>TEXT</td><td>NOT NULL, DEFAULT datetime('now')</td></tr>
+      <tr><td>observacao</td><td>TEXT</td><td>—</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SEÇÃO 3 — DIAGRAMA DE CLASSES
+════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-title">3. Diagrama de Classes</div>
+  <div class="class-grid">
+
+    <!-- Usuario -->
+    <div class="cls">
+      <div class="cls-head"><div class="pkg">helpdesk.model</div><div class="cname">Usuario</div></div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">idUsuario</span>: <span class="field-type">int</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">nome</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">email</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">departamento</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">telefone</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">ativo</span>: <span class="field-type">boolean</span></div>
+      </div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">getIdUsuario</span>(): <span class="ret-type">int</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">getNome</span>(): <span class="ret-type">String</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">getEmail</span>(): <span class="ret-type">String</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">setters...</span></div>
+      </div>
+    </div>
+
+    <!-- Tecnico -->
+    <div class="cls">
+      <div class="cls-head"><div class="pkg">helpdesk.model</div><div class="cname">Tecnico</div></div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">idTecnico</span>: <span class="field-type">int</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">nome</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">email</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">login</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">ativo</span>: <span class="field-type">boolean</span></div>
+      </div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">getters/setters...</span></div>
+      </div>
+    </div>
+
+    <!-- Categoria -->
+    <div class="cls">
+      <div class="cls-head"><div class="pkg">helpdesk.model</div><div class="cname">Categoria</div></div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">idCategoria</span>: <span class="field-type">int</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">nome</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">descricao</span>: <span class="field-type">String</span></div>
+      </div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">getters/setters...</span></div>
+      </div>
+    </div>
+
+    <!-- Chamado -->
+    <div class="cls">
+      <div class="cls-head"><div class="pkg">helpdesk.model</div><div class="cname">Chamado</div></div>
+      <div class="cls-section">
+        <div class="cls-row" style="color:var(--accent3)">«enum» Prioridade {BAIXA, MEDIA, ALTA, CRITICA}</div>
+        <div class="cls-row" style="color:var(--accent3)">«enum» Status {ABERTO, EM_ATENDIMENTO, RESOLVIDO, FECHADO}</div>
+      </div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">idChamado</span>: <span class="field-type">int</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">titulo</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">descricao</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">prioridade</span>: <span class="field-type">Prioridade</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">status</span>: <span class="field-type">Status</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">dtAbertura</span>: <span class="field-type">String</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">idUsuario</span>: <span class="field-type">int</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">idCategoria</span>: <span class="field-type">int</span></div>
+        <div class="cls-row"><span class="priv">-</span><span class="field-name">idEquipamento</span>: <span class="field-type">Integer</span></div>
+      </div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">getters/setters...</span></div>
+      </div>
+    </div>
+
+    <!-- UsuarioDAO -->
+    <div class="cls">
+      <div class="cls-head"><div class="pkg">helpdesk.dao</div><div class="cname">UsuarioDAO</div></div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">inserir</span>(u: Usuario): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">listarTodos</span>(): <span class="ret-type">List&lt;Usuario&gt;</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">buscarPorId</span>(id: int): <span class="ret-type">Usuario</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">atualizar</span>(u: Usuario): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">excluir</span>(id: int): <span class="ret-type">void</span></div>
+      </div>
+    </div>
+
+    <!-- TecnicoDAO -->
+    <div class="cls">
+      <div class="cls-head"><div class="pkg">helpdesk.dao</div><div class="cname">TecnicoDAO</div></div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">inserir</span>(t: Tecnico): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">listarTodos</span>(): <span class="ret-type">List&lt;Tecnico&gt;</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">buscarPorId</span>(id: int): <span class="ret-type">Tecnico</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">atualizar</span>(t: Tecnico): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">excluir</span>(id: int): <span class="ret-type">void</span></div>
+      </div>
+    </div>
+
+    <!-- ChamadoDAO -->
+    <div class="cls" style="min-width:280px">
+      <div class="cls-head"><div class="pkg">helpdesk.dao</div><div class="cname">ChamadoDAO</div></div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">inserir</span>(ch: Chamado): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">listarTodos</span>(): <span class="ret-type">List&lt;Chamado&gt;</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">listarPorStatus</span>(s: Status): <span class="ret-type">List&lt;Chamado&gt;</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">buscarPorId</span>(id: int): <span class="ret-type">Chamado</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">atualizar</span>(ch: Chamado): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">excluir</span>(id: int): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">atribuirTecnico</span>(idC, idT, obs): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">removerTecnico</span>(idC, idT): <span class="ret-type">void</span></div>
+        <div class="cls-row"><span class="pub">+</span><span class="meth-name">listarTecnicosDoChamado</span>(id): <span class="ret-type">List&lt;String&gt;</span></div>
+      </div>
+    </div>
+
+    <!-- ConnectionFactory -->
+    <div class="cls">
+      <div class="cls-head"><div class="pkg">helpdesk.dao</div><div class="cname">ConnectionFactory</div></div>
+      <div class="cls-section">
+        <div class="cls-row" style="color:var(--muted)">URL: "jdbc:sqlite:helpdesk.db"</div>
+      </div>
+      <div class="cls-section">
+        <div class="cls-row"><span class="pub">+«static»</span><span class="meth-name">getConnection</span>(): <span class="ret-type">Connection</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Associações entre classes -->
+  <div style="margin-top:24px">
+    <div class="section-title" style="font-size:15px;">Associações entre Classes</div>
+    <div class="rel-section">
+      <div class="rel-row"><span class="rel-entity">UsuarioDAO</span><span class="rel-card">usa</span><span class="rel-entity">ConnectionFactory</span><span class="rel-label">obtém Connection via JDBC</span></div>
+      <div class="rel-row"><span class="rel-entity">ChamadoDAO</span><span class="rel-card">usa</span><span class="rel-entity">ConnectionFactory</span><span class="rel-label">obtém Connection via JDBC</span></div>
+      <div class="rel-row"><span class="rel-entity">ChamadoDAO</span><span class="rel-card">persiste</span><span class="rel-entity">Chamado</span><span class="rel-label">CRUD + associação N:N com Tecnico</span></div>
+      <div class="rel-row"><span class="rel-entity">ChamadoPanel</span><span class="rel-card">usa</span><span class="rel-entity">ChamadoDAO, UsuarioDAO, TecnicoDAO, CategoriaDAO</span></div>
+      <div class="rel-row"><span class="rel-entity">MainFrame</span><span class="rel-card">contém</span><span class="rel-entity">ChamadoPanel, UsuarioPanel, TecnicoPanel</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SEÇÃO 4 — REGRAS DE NEGÓCIO
+════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-title">4. Regras de Negócio Implementadas</div>
+  <ul class="rn-list">
+    <li><strong>RN01 — Usuário inativo:</strong> Não é permitido abrir chamado para usuário com <code>ativo = 0</code>. Verificado no DAO antes do INSERT.</li>
+    <li><strong>RN02 — Chamado fechado não reabre:</strong> Ao tentar alterar o status de um chamado <code>FECHADO</code> para qualquer outro, o sistema lança exceção.</li>
+    <li><strong>RN03 — Avanço automático de status:</strong> Ao atribuir o primeiro técnico a um chamado <code>ABERTO</code>, o status avança automaticamente para <code>EM_ATENDIMENTO</code>.</li>
+    <li><strong>RN04 — Integridade referencial:</strong> Usuário com chamados vinculados não pode ser excluído (verificado no DAO antes do DELETE).</li>
+    <li><strong>RN05 — Data de fechamento automática:</strong> Ao resolver ou fechar um chamado, <code>dt_fechamento</code> é preenchida automaticamente com o timestamp atual.</li>
+  </ul>
+</div>
+
+</body>
+</html>
