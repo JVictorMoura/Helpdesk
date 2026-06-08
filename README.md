@@ -57,28 +57,6 @@ javac -cp ".;sqlite-jdbc.jar" -d out -sourcepath src src/helpdesk/ui/MainFrame.j
 
 **2. Inicializar o banco** *(obrigatório na primeira vez)*
 
-Crie o arquivo `InitDB.java` na raiz de `helpdesk/` com o seguinte conteúdo:
-
-```java
-import java.sql.*;
-import java.nio.file.*;
-
-public class InitDB {
-    public static void main(String[] args) throws Exception {
-        String sql = Files.readString(Path.of("db/schema.sql"));
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:helpdesk.db");
-        conn.createStatement().execute("PRAGMA foreign_keys = ON");
-        for (String stmt : sql.split(";")) {
-            String s = stmt.strip();
-            if (!s.isEmpty() && !s.startsWith("--"))
-                conn.createStatement().execute(s);
-        }
-        System.out.println("Banco inicializado com sucesso!");
-        conn.close();
-    }
-}
-```
-
 Compile e execute:
 
 ```bash
