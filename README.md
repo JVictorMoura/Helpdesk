@@ -1,26 +1,27 @@
-# Helpdesk de TI
+#  Helpdesk de TI
 
 > Laboratório de Banco de Dados | UCB 2026
 
 Sistema desktop de gerenciamento de chamados de suporte técnico, desenvolvido com Java Swing, JDBC e banco de dados SQLite. Implementa o padrão arquitetural DAO e demonstra os fundamentos de CRUD, integridade referencial e relacionamentos N:N em banco relacional.
 
 ---
+
 ## Requisitos para rodar localmente
 
 ### 1. Java Development Kit (JDK) 11 ou superior
 
 O projeto usa apenas APIs padrão do Java, compatíveis com JDK 11+. Versões mais recentes (17, 21) também funcionam sem alterações.
 
-- **Windows / macOS / Linux:** [adoptium.net](https://adoptium.net) (distribuição gratuita e open-source)
+- **Download:** [adoptium.net](https://adoptium.net) (distribuição gratuita e open-source)
 
-Para verificar se o JDK já está instalado e qual versão:
+Para verificar se o JDK já está instalado:
 
 ```bash
 java -version
 javac -version
 ```
 
-Ambos os comandos precisam funcionar. Se apenas `java` funcionar mas `javac` não, você tem apenas o JRE (ambiente de execução) — é preciso instalar o JDK completo.
+Ambos os comandos precisam funcionar. Se apenas `java` funcionar mas `javac` não, você tem apenas o JRE — é preciso instalar o JDK completo.
 
 ---
 
@@ -29,51 +30,74 @@ Ambos os comandos precisam funcionar. Se apenas `java` funcionar mas `javac` nã
 O projeto não usa servidor de banco de dados. Todo o acesso ao SQLite é feito via JDBC, que exige o driver como um arquivo `.jar` externo.
 
 - **Download:** [github.com/xerial/sqlite-jdbc/releases](https://github.com/xerial/sqlite-jdbc/releases)
-- Baixe o arquivo `sqlite-jdbc-X.X.X.jar` e renomeie para `sqlite-jdbc.jar`
-- Coloque-o na raiz da pasta `helpdesk/`, no mesmo nível que `src/` e `db/`
+- Baixe o `sqlite-jdbc-X.X.X.jar`, renomeie para `sqlite-jdbc.jar` e coloque na raiz da pasta `helpdesk/`
 
 > O driver é o único arquivo externo necessário. Não há dependências adicionais nem necessidade de instalar o SQLite separadamente — ele já vem embutido no `.jar`.
 
 ---
 
-### Não é necessário
+### Não é necessário instalar
 
-| O que **não** precisa instalar | Motivo |
-|-------------------------------|--------|
+| O que não precisa | Motivo |
+|-------------------|--------|
 | SQLite CLI ou servidor | O banco roda embutido via driver JDBC |
 | Maven, Gradle ou qualquer build tool | A compilação é feita diretamente com `javac` |
 | IDE (Eclipse, IntelliJ, VS Code) | Basta um terminal com JDK no PATH |
-| Banco de dados externo | O arquivo `helpdesk.db` é criado automaticamente na primeira execução |
 
+---
 
-## Apresentação rápida
+## Apresentação rápida (Windows)
 
-> Execute os comandos abaixo a partir da pasta `helpdesk/`. Na primeira execução o banco é criado e populado automaticamente.
+Execute todos os comandos a partir da pasta `helpdesk/`.
 
 **1. Compilar**
 ```bash
-# Windows
 javac -cp ".;sqlite-jdbc.jar" -d out -sourcepath src src/helpdesk/ui/MainFrame.java
-
-# Linux / macOS
-javac -cp ".:sqlite-jdbc.jar" -d out -sourcepath src src/helpdesk/ui/MainFrame.java
 ```
 
-**2. Copiar o schema** *(obrigatório na primeira vez)*
+**2. Inicializar o banco** *(obrigatório na primeira vez)*
+
+Crie o arquivo `InitDB.java` na raiz de `helpdesk/` com o seguinte conteúdo:
+
+```java
+import java.sql.*;
+import java.nio.file.*;
+
+public class InitDB {
+    public static void main(String[] args) throws Exception {
+        String sql = Files.readString(Path.of("db/schema.sql"));
+        Connection conn = DriverManager.getConnection("jdbc:sqlite:helpdesk.db");
+        conn.createStatement().execute("PRAGMA foreign_keys = ON");
+        for (String stmt : sql.split(";")) {
+            String s = stmt.strip();
+            if (!s.isEmpty() && !s.startsWith("--"))
+                conn.createStatement().execute(s);
+        }
+        System.out.println("Banco inicializado com sucesso!");
+        conn.close();
+    }
+}
+```
+
+Compile e execute:
+
 ```bash
-cp db/schema.sql out/schema.sql
+javac -cp ".;sqlite-jdbc.jar" InitDB.java
+java -cp ".;sqlite-jdbc.jar" InitDB
 ```
+
+Deve aparecer: `Banco inicializado com sucesso!`
 
 **3. Executar**
 ```bash
-# Windows
-java -cp ".;sqlite-jdbc.jar;out" helpdesk.ui.MainFrame
-
-# Linux / macOS
-java -cp ".:sqlite-jdbc.jar:out" helpdesk.ui.MainFrame
+java -cp ".;sqlite-jdbc.jar;out;db" helpdesk.ui.MainFrame
 ```
 
-###  Onde estão os scripts
+> Os `WARNING` sobre `native access` que aparecem no terminal são normais no Java 17+ e não afetam o funcionamento.
+
+---
+
+### 📁 Onde estão os scripts
 
 | O que você procura | Onde fica |
 |--------------------|-----------|
@@ -87,9 +111,7 @@ java -cp ".:sqlite-jdbc.jar:out" helpdesk.ui.MainFrame
 ## Sumário
 
 - [Visão Geral](#visão-geral)
-- [Pré-requisitos](#pré-requisitos)
 - [Estrutura do Projeto](#estrutura-do-projeto)
-- [Como Compilar e Executar](#como-compilar-e-executar)
 - [Banco de Dados](#banco-de-dados)
 - [Funcionalidades](#funcionalidades)
 - [Regras de Negócio](#regras-de-negócio)
@@ -99,9 +121,7 @@ java -cp ".:sqlite-jdbc.jar:out" helpdesk.ui.MainFrame
 
 ## Visão Geral
 
-O sistema permite cadastrar e gerenciar chamados de suporte de TI, associando-os a usuários, categorias, equipamentos e técnicos responsáveis. Toda a persistência é feita em um arquivo SQLite local (`helpdesk.db`), criado e populado automaticamente na primeira execução.
-
-**Tecnologias utilizadas:**
+O sistema permite cadastrar e gerenciar chamados de suporte de TI, associando-os a usuários, categorias, equipamentos e técnicos responsáveis. Toda a persistência é feita em um arquivo SQLite local (`helpdesk.db`), criado na primeira execução.
 
 | Camada | Tecnologia |
 |--------|-----------|
@@ -109,15 +129,6 @@ O sistema permite cadastrar e gerenciar chamados de suporte de TI, associando-os
 | Acesso a dados | JDBC |
 | Banco de dados | SQLite 3 |
 | Driver JDBC | sqlite-jdbc |
-
----
-
-## Pré-requisitos
-
-- **JDK 11** ou superior
-- **sqlite-jdbc** (arquivo `.jar`) — download em [github.com/xerial/sqlite-jdbc/releases](https://github.com/xerial/sqlite-jdbc/releases)
-
-Coloque o arquivo `sqlite-jdbc.jar` na raiz da pasta `helpdesk/` antes de compilar.
 
 ---
 
@@ -129,6 +140,7 @@ helpdesk/
 │   └── schema.sql              ← DDL das tabelas, views e dados de exemplo
 ├── docs/
 │   └── diagramas.html          ← DER, modelo lógico e diagrama de classes
+├── InitDB.java                 ← Inicialização manual do banco (Windows)
 └── src/helpdesk/
     ├── model/                  ← Entidades do domínio (POJOs)
     │   ├── Usuario.java
@@ -149,46 +161,6 @@ helpdesk/
         ├── UsuarioPanel.java
         └── TecnicoPanel.java
 ```
-
----
-
-## Como Compilar e Executar
-
-Execute todos os comandos a partir da pasta `helpdesk/`.
-
-### 1. Compilar
-
-**Windows:**
-```bash
-javac -cp ".;sqlite-jdbc.jar" -d out -sourcepath src src/helpdesk/ui/MainFrame.java
-```
-
-**Linux / macOS:**
-```bash
-javac -cp ".:sqlite-jdbc.jar" -d out -sourcepath src src/helpdesk/ui/MainFrame.java
-```
-
-### 2. Copiar o schema para o classpath
-
-```bash
-cp db/schema.sql out/schema.sql
-```
-
-> Este passo é obrigatório. O `DatabaseInitializer` localiza o `schema.sql` via classpath na primeira execução.
-
-### 3. Executar
-
-**Windows:**
-```bash
-java -cp ".;sqlite-jdbc.jar;out" helpdesk.ui.MainFrame
-```
-
-**Linux / macOS:**
-```bash
-java -cp ".:sqlite-jdbc.jar:out" helpdesk.ui.MainFrame
-```
-
-Na primeira execução, o arquivo `helpdesk.db` é criado automaticamente na pasta corrente com todas as tabelas e dados de exemplo já inseridos.
 
 ---
 
@@ -223,8 +195,6 @@ chamado     N ──────── N  tecnico   → chamado_tecnico
 ```
 
 ### Status do chamado
-
-Um chamado percorre os seguintes estados:
 
 ```
 ABERTO  →  EM_ATENDIMENTO  →  RESOLVIDO  →  FECHADO
@@ -294,3 +264,4 @@ A `ConnectionFactory` fornece conexões JDBC e ativa as foreign keys (`PRAGMA fo
 
 ---
 
+*Laboratório de Banco de Dados — UCB 2026 | SQLite + JDBC + Swing*
