@@ -5,6 +5,46 @@
 Sistema desktop de gerenciamento de chamados de suporte técnico, desenvolvido com Java Swing, JDBC e banco de dados SQLite. Implementa o padrão arquitetural DAO e demonstra os fundamentos de CRUD, integridade referencial e relacionamentos N:N em banco relacional.
 
 ---
+## Requisitos para rodar localmente
+
+### 1. Java Development Kit (JDK) 11 ou superior
+
+O projeto usa apenas APIs padrão do Java, compatíveis com JDK 11+. Versões mais recentes (17, 21) também funcionam sem alterações.
+
+- **Windows / macOS / Linux:** [adoptium.net](https://adoptium.net) (distribuição gratuita e open-source)
+
+Para verificar se o JDK já está instalado e qual versão:
+
+```bash
+java -version
+javac -version
+```
+
+Ambos os comandos precisam funcionar. Se apenas `java` funcionar mas `javac` não, você tem apenas o JRE (ambiente de execução) — é preciso instalar o JDK completo.
+
+---
+
+### 2. Driver JDBC do SQLite (`sqlite-jdbc.jar`)
+
+O projeto não usa servidor de banco de dados. Todo o acesso ao SQLite é feito via JDBC, que exige o driver como um arquivo `.jar` externo.
+
+- **Download:** [github.com/xerial/sqlite-jdbc/releases](https://github.com/xerial/sqlite-jdbc/releases)
+- Baixe o arquivo `sqlite-jdbc-X.X.X.jar` e renomeie para `sqlite-jdbc.jar`
+- Coloque-o na raiz da pasta `helpdesk/`, no mesmo nível que `src/` e `db/`
+
+> O driver é o único arquivo externo necessário. Não há dependências adicionais nem necessidade de instalar o SQLite separadamente — ele já vem embutido no `.jar`.
+
+---
+
+### Não é necessário
+
+| O que **não** precisa instalar | Motivo |
+|-------------------------------|--------|
+| SQLite CLI ou servidor | O banco roda embutido via driver JDBC |
+| Maven, Gradle ou qualquer build tool | A compilação é feita diretamente com `javac` |
+| IDE (Eclipse, IntelliJ, VS Code) | Basta um terminal com JDK no PATH |
+| Banco de dados externo | O arquivo `helpdesk.db` é criado automaticamente na primeira execução |
+
 
 ## Apresentação rápida
 
