@@ -75,7 +75,7 @@ java -cp ".;sqlite-jdbc.jar;out;db" helpdesk.ui.MainFrame
 
 ---
 
-### 📁 Onde estão os scripts
+###  Onde estão os scripts
 
 | O que você procura | Onde fica |
 |--------------------|-----------|
